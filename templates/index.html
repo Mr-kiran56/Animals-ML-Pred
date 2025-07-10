@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WildVision - Animal Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4cc9f0;
+            --success: #4ade80;
+            --warning: #facc15;
+            --danger: #f87171;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --jungle-green: #2a9d8f;
+            --sunset-orange: #e76f51;
+            --wild-blue: #3a86ff;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #1a2a6c);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, var(--accent), var(--success), var(--warning));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        header p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .upload-section, .results-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            background: var(--jungle-green);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area {
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .upload-area i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .upload-area h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .upload-area p {
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .upload-btn {
+            background: var(--jungle-green);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-btn:hover {
+            background: #228b7d;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        #file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .image-preview {
+            margin-top: 20px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .image-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .image-preview .placeholder {
+            padding: 30px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .prediction-results {
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item .animal-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--wild-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.5rem;
+        }
+
+        .result-item .animal-info {
+            flex-grow: 1;
+        }
+
+        .result-item .animal-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .result-item .confidence {
+            display: flex;
+            align-items: center;
+        }
+
+        .confidence-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            flex-grow: 1;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+
+        .confidence-level {
+            height: 100%;
+            background: var(--success);
+            border-radius: 4px;
+            width: 0;
+            transition: width 1s ease;
+        }
+
+        .confidence-value {
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .animal-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .animal-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .animal-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .animal-card img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .animal-card .animal-name {
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            background: rgba(0,0,0,0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-predict {
+            background: var(--primary);
+            color: white;
+            flex-grow: 1;
+        }
+
+        .btn-predict:hover {
+            background: var(--secondary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-reset {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 5px solid var(--accent);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .animal-count {
+            background: var(--jungle-green);
+            color: white;
+            border-radius: 50px;
+            padding: 5px 15px;
+            font-size: 1rem;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        
+        .error {
+            background: var(--danger);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>WildVision AI</h1>
+            <p>Upload an image of any animal and our advanced machine learning model will identify it from 90+ species with incredible accuracy.</p>
+            <div class="animal-count">
+                <i class="fas fa-paw"></i> 90+ Animal Species Supported
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="card upload-section">
+                <h2 class="section-title"><i class="fas fa-upload"></i> Upload Animal Image</h2>
+                <div class="upload-area" id="upload-area">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Drag & Drop or Click to Upload</h3>
+                    <p>Supported formats: JPG, PNG, JPEG (Max 5MB)</p>
+                    <button class="upload-btn"><i class="fas fa-file-upload"></i> Browse Files</button>
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+                
+                <div class="image-preview" id="image-preview">
+                    <div class="placeholder">
+                        <i class="fas fa-camera"></i>
+                        <p>Your image will appear here</p>
+                    </div>
+                    <img id="preview-image" src="" alt="Preview">
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-predict" id="predict-btn"><i class="fas fa-paw"></i> Predict Animal</button>
+                    <button class="btn btn-reset" id="reset-btn"><i class="fas fa-redo"></i></button>
+                </div>
+            </div>
+            
+            <div class="card results-section">
+                <h2 class="section-title"><i class="fas fa-chart-bar"></i> Prediction Results</h2>
+                
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analyzing image with AI. Please wait...</p>
+                </div>
+                
+                <div class="prediction-results" id="results">
+                    <div class="placeholder">
+                        <i class="fas fa-search"></i>
+                        <p>Upload an image and click "Predict Animal" to see results</p>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top: 20px; color: var(--accent);">Animal Gallery</h3>
+                <div class="animal-gallery" id="animal-gallery">
+                    {% for animal in ANIMAL_IMAGES %}
+                    <div class="animal-card">
+                        <img src="{{ ANIMAL_IMAGES[animal] }}" alt="{{ animal }}">
+                        <div class="animal-name">{{ animal|title }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>WildVision AI &copy; 2023 | Advanced Animal Prediction System | 90+ Species</p>
+        </footer>
+    </div>
+
+    <script>
+    const ANIMAL_CLASSES = {{ ANIMAL_CLASSES | tojson }};
+    const ANIMAL_IMAGES = {{ ANIMAL_IMAGES | tojson }};
+    
+    // Add animal name mapping to JavaScript
+    const REAL_NAME_MAPPING = {
+        "Animal_1": "Antelope",
+        "Animal_2": "Badger",
+        "Animal_3": "Bat",
+        "Animal_4": "Bear",
+        "Animal_5": "Bee",
+        "Animal_6": "Beetle",
+        "Animal_7": "Bison",
+        "Animal_8": "Boar",
+        "Animal_9": "Butterfly",
+        "Animal_10": "Cat",
+        "Animal_11": "Caterpillar",
+        "Animal_12": "Chimpanzee",
+        "Animal_13": "Cockroach",
+        "Animal_14": "Cow",
+        "Animal_15": "Coyote",
+        "Animal_16": "Crab",
+        "Animal_17": "Crow",
+        "Animal_18": "Deer",
+        "Animal_19": "Dog",
+        "Animal_20": "Dolphin",
+        "Animal_21": "Donkey",
+        "Animal_22": "Dragonfly",
+        "Animal_23": "Duck",
+        "Animal_24": "Eagle",
+        "Animal_25": "Elephant",
+        "Animal_26": "Flamingo",
+        "Animal_27": "Fly",
+        "Animal_28": "Fox",
+        "Animal_29": "Goat",
+        "Animal_30": "Goldfish",
+        "Animal_31": "Goose",
+        "Animal_32": "Gorilla",
+        "Animal_33": "Grasshopper",
+        "Animal_34": "Hamster",
+        "Animal_35": "Hare",
+        "Animal_36": "Hedgehog",
+        "Animal_37": "Hippopotamus",
+        "Animal_38": "Hornbill",
+        "Animal_39": "Horse",
+        "Animal_40": "Hummingbird",
+        "Animal_41": "Hyena",
+        "Animal_42": "Jellyfish",
+        "Animal_43": "Kangaroo",
+        "Animal_44": "Koala",
+        "Animal_45": "Ladybugs",
+        "Animal_46": "Leopard",
+        "Animal_47": "Lion",
+        "Animal_48": "Lizard",
+        "Animal_49": "Lobster",
+        "Animal_50": "Mosquito",
+        "Animal_51": "Moth",
+        "Animal_52": "Mouse",
+        "Animal_53": "Octopus",
+        "Animal_54": "Okapi",
+        "Animal_55": "Orangutan",
+        "Animal_56": "Otter",
+        "Animal_57": "Owl",
+        "Animal_58": "Ox",
+        "Animal_59": "Oyster",
+        "Animal_60": "Panda",
+        "Animal_61": "Parrot",
+        "Animal_62": "Pelecaniformes",
+        "Animal_63": "Penguin",
+        "Animal_64": "Pig",
+        "Animal_65": "Pigeon",
+        "Animal_66": "Porcupine",
+        "Animal_67": "Possum",
+        "Animal_68": "Raccoon",
+        "Animal_69": "Rat",
+        "Animal_70": "Reindeer",
+        "Animal_71": "Rhinoceros",
+        "Animal_72": "Sandpiper",
+        "Animal_73": "Seahorse",
+        "Animal_74": "Seal",
+        "Animal_75": "Shark",
+        "Animal_76": "Sheep",
+        "Animal_77": "Snake",
+        "Animal_78": "Sparrow",
+        "Animal_79": "Squid",
+        "Animal_80": "Squirrel",
+        "Animal_81": "Starfish",
+        "Animal_82": "Swan",
+        "Animal_83": "Tiger",
+        "Animal_84": "Turkey",
+        "Animal_85": "Turtle",
+        "Animal_86": "Whale",
+        "Animal_87": "Wolf",
+        "Animal_88": "Wombat",
+        "Animal_89": "Woodpecker",
+        "Animal_90": "Zebra"
+    };
+
+    // Create a mapping from animal ID to image URL
+    const ANIMAL_IMAGE_MAP = {};
+    {% for cls, url in ANIMAL_IMAGES.items() %}
+        ANIMAL_IMAGE_MAP["{{ cls }}"] = "{{ url }}";
+    {% endfor %}
+
+    const fileInput = document.getElementById('file-input');
+    const uploadArea = document.getElementById('upload-area');
+    const previewImage = document.getElementById('preview-image');
+    const imagePreview = document.getElementById('image-preview');
+    const predictBtn = document.getElementById('predict-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const resultsContainer = document.getElementById('results');
+    const loadingIndicator = document.getElementById('loading');
+    const animalGallery = document.getElementById('animal-gallery');
+
+    // Initialize with random animal gallery
+    buildInitialGallery();
+
+    fileInput.addEventListener('change', function(e) {
+        handleFileSelect(e.target.files[0]);
+    });
+
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.style.borderColor = '#4cc9f0';
+        this.style.backgroundColor = 'rgba(76, 201, 240, 0.1)';
+    });
+
+    uploadArea.addEventListener('dragleave', function() {
+        this.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        this.style.backgroundColor = '';
+    });
+
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+        this.style.backgroundColor = '';
+        handleFileSelect(e.dataTransfer.files[0]);
+    });
+
+    predictBtn.addEventListener('click', function() {
+        const file = fileInput.files[0];
+        if (!file) {
+            resultsContainer.innerHTML = `<div class="error">Please upload an image first!</div>`;
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        resultsContainer.innerHTML = '';
+        loadingIndicator.style.display = 'block';
+
+        fetch('/predict', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            loadingIndicator.style.display = 'none';
+            if (data.error) {
+                resultsContainer.innerHTML = `<div class="error">${data.error}</div>`;
+            } else {
+                displayResults(data);
+            }
+        })
+        .catch(error => {
+            loadingIndicator.style.display = 'none';
+            resultsContainer.innerHTML = `<div class="error">Error: ${error.message || 'Something went wrong!'}</div>`;
+            console.error('Fetch error:', error);
+        });
+    });
+
+    resetBtn.addEventListener('click', function() {
+        fileInput.value = '';
+        previewImage.src = '';
+        previewImage.style.display = 'none';
+        imagePreview.querySelector('.placeholder').style.display = 'block';
+        resultsContainer.innerHTML = '<div class="placeholder"><i class="fas fa-search"></i><p>Upload an image and click "Predict Animal" to see results</p></div>';
+        buildInitialGallery();
+    });
+
+    function handleFileSelect(file) {
+        if (!file || !file.type.match('image.*')) {
+            alert('Please select an image file!');
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size exceeds 5MB limit');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            previewImage.src = event.target.result;
+            previewImage.style.display = 'block';
+            imagePreview.querySelector('.placeholder').style.display = 'none';
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function displayResults(data) {
+        resultsContainer.innerHTML = '';
+
+        // Main prediction result
+        const mainResult = document.createElement('div');
+        mainResult.className = 'result-item pulse';
+        mainResult.innerHTML = `
+            <div class="animal-icon" style="background: var(--wild-blue);">
+                <i class="fas fa-crown"></i>
+            </div>
+            <div class="animal-info">
+                <div class="animal-name">${data.prediction}</div>
+                <div class="confidence">
+                    <span>Confidence:</span>
+                    <div class="confidence-bar">
+                        <div class="confidence-level" style="width: ${data.confidence.toFixed(1)}%"></div>
+                    </div>
+                    <div class="confidence-value">${data.confidence.toFixed(1)}%</div>
+                </div>
+            </div>
+        `;
+        resultsContainer.appendChild(mainResult);
+
+        // Other predictions
+        data.predictions.slice(1).forEach((pred) => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-item';
+            resultItem.innerHTML = `
+                <div class="animal-icon">
+                    <i class="fas fa-paw"></i>
+                </div>
+                <div class="animal-info">
+                    <div class="animal-name">${pred.animal}</div>
+                    <div class="confidence">
+                        <span>Confidence:</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-level" style="width: ${pred.confidence.toFixed(1)}%"></div>
+                        </div>
+                        <div class="confidence-value">${pred.confidence.toFixed(1)}%</div>
+                    </div>
+                </div>
+            `;
+            resultsContainer.appendChild(resultItem);
+        });
+
+        // Update gallery with top predictions
+        updateGallery(data.predictions);
+    }
+
+    function updateGallery(predictions) {
+        animalGallery.innerHTML = '';
+        predictions.slice(0, 3).forEach(pred => {
+            // Get image URL from our mapping using the animal ID
+            const imageUrl = ANIMAL_IMAGE_MAP[pred.id] || 'static/animal.jpg';
+            
+            const animalCard = document.createElement('div');
+            animalCard.className = 'animal-card';
+            animalCard.innerHTML = `
+                <img src="${imageUrl}" alt="${pred.animal}" 
+                     onerror="this.onerror=null; this.src='static/animal.jpg'">
+                <div class="animal-name">${pred.animal} (${pred.confidence.toFixed(1)}%)</div>
+            `;
+            animalGallery.appendChild(animalCard);
+        });
+    }
+
+    function buildInitialGallery() {
+        animalGallery.innerHTML = '';
+        // Get all animal IDs
+        const animalIds = Object.keys(ANIMAL_IMAGES);
+        
+        // Show 6 random animals initially
+        getRandomAnimals(6, animalIds).forEach(animalId => {
+            const displayName = REAL_NAME_MAPPING[animalId] || animalId;
+            const animalCard = document.createElement('div');
+            animalCard.className = 'animal-card';
+            animalCard.innerHTML = `
+                <img src="${ANIMAL_IMAGES[animalId]}" alt="${displayName}" 
+                     onerror="this.onerror=null; this.src='static/animal.jpg'">
+                <div class="animal-name">${displayName}</div>
+            `;
+            animalGallery.appendChild(animalCard);
+        });
+    }
+
+    function getRandomAnimals(count, animalList) {
+        const availableAnimals = [...animalList];
+        const randomAnimals = [];
+        
+        while (randomAnimals.length < count && availableAnimals.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableAnimals.length);
+            randomAnimals.push(availableAnimals.splice(randomIndex, 1)[0]);
+        }
+        return randomAnimals;
+    }
+</script>
+</body>
+</html>
