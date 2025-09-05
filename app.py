@@ -107,27 +107,22 @@ REAL_NAME_MAPPING = {
 }
 
 try:
-    # Load model
     model = load_model('model.keras')
     logger.info("Model loaded successfully!")
-    
-    # Get model details
+
     if len(model.input_shape) == 4:
-        input_shape = model.input_shape[1:3]  # Get (height, width)
+        input_shape = model.input_shape[1:3] 
     else:
-        input_shape = model.input_shape[1:-1]  # Alternative for different architectures
+        input_shape = model.input_shape[1:-1] 
     
-    num_classes = model.output_shape[-1]  # Get class count
+    num_classes = model.output_shape[-1]  
     logger.info(f"Model input shape: {input_shape}")
     logger.info(f"Number of output classes: {num_classes}")
     
-    # Create class list based on the model's output size
     CLASSES = [f"Animal_{i}" for i in range(1, num_classes + 1)]
-    
-    # Map to real names
+
     DISPLAY_NAMES = [REAL_NAME_MAPPING.get(cls, cls) for cls in CLASSES]
     
-    # Create animal image mapping
     ANIMAL_IMAGES = {}
     for cls in CLASSES:
         animal_name = REAL_NAME_MAPPING.get(cls, "animal")
@@ -166,20 +161,18 @@ def predict():
         file = request.files['file']
         if file.filename == '':
             return jsonify({'error': 'No selected file'}), 400
-        
-        # Create uploads directory
+       
         os.makedirs('uploads', exist_ok=True)
         img_path = os.path.join('uploads', file.filename)
         file.save(img_path)
         logger.info(f"Saved image to: {img_path}")
-        
-        # Preprocess image using model's input shape
+     
         img = image.load_img(img_path, target_size=input_shape)
         img_array = image.img_to_array(img)
         img_array = np.expand_dims(img_array, axis=0)
         img_array = img_array / 255.0
 
-        # Make prediction
+    
         logger.info("Making prediction...")
         prediction = model.predict(img_array)
         logger.info(f"Prediction shape: {prediction.shape}")
@@ -187,13 +180,12 @@ def predict():
         
         predicted_index = np.argmax(prediction[0])
         logger.info(f"Predicted index: {predicted_index}")
-        
-        # Get top predictions with confidence
+  
         top_indices = np.argsort(prediction[0])[::-1][:3]
         predictions = []
         
         for i in top_indices:
-            # Classes are 1-indexed: Animal_1 to Animal_90
+
             animal_id = f"Animal_{i+1}"
             animal_name = REAL_NAME_MAPPING.get(animal_id, animal_id)
             confidence = float(prediction[0][i] * 100)
@@ -203,11 +195,10 @@ def predict():
                 'animal': animal_name,
                 'confidence': confidence
             })
-        
-        # Find the highest confidence prediction
+
         main_prediction = predictions[0]
         
-        # Clean up
+    
         if os.path.exists(img_path):
             os.remove(img_path)
         
